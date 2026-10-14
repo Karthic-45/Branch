@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "cockroachdb-cloud": {
+      "type": "http",
+      "url": "https://cockroachlabs.cloud/mcp",
+      "headers": {
+        "mcp-cluster-id": "0f098d56-63b1-4ca6-9e41-62fa9bda2f67"
+      }
+    },
+    "bmem-audit": {
+      "type": "stdio",
+      "command": ".venv/bin/python",
+      "args": ["-m", "bmem.mcp_server"],
+      "env": {
+        "BMEM_FAKE_EMBEDDINGS": "1"
+      }
+    }
+  }
+}

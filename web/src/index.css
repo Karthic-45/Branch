@@ -1,0 +1,290 @@
+@import "tailwindcss";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, .dark, .dark *));
+
+/* ── Branchable Memory design tokens ──────────────────────────────────────
+   An engineering control plane, not an AI dashboard. Light is the primary
+   theme; colour carries state and nothing else. There is exactly one accent
+   (blue) plus four semantic states, and two vendor accents used only where
+   the UI is literally talking about that vendor.
+
+   Token names are semantic on purpose. Components never reference a hue --
+   `text-accent`, not `text-blue` -- so the palette can be retuned in one
+   place and dark mode is a value swap rather than a per-component variant. */
+@theme {
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Surfaces, back to front */
+  --color-plane: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f3f5;
+  --color-surface-3: #e8ebee;
+
+  /* Text, by descending emphasis */
+  --color-ink: #17191c;
+  --color-ink-2: #626b76;
+  --color-muted: #8b949e;
+
+  /* Borders. Solid, not alpha: 1px hairlines are the primary separator in
+     this UI and alpha borders shift colour over every different surface. */
+  --color-hairline: #e2e5e9;
+  --color-hairline-strong: #d0d5db;
+
+  /* One accent. Blue is interaction and current-state; it is never
+     decorative. */
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-accent-soft: #eff4ff;
+
+  /* Semantic state. These four are the only colours allowed to mean
+     "something happened". */
+  --color-success: #15803d;
+  --color-success-soft: #eef7f1;
+  --color-warning: #b45309;
+  --color-warning-soft: #fdf5ec;
+  --color-error: #b91c1c;
+  --color-error-soft: #fdf1f1;
+  --color-info: #0369a1;
+  --color-info-soft: #eef6fb;
+
+  /* Vendor accents. Used only on elements that are specifically about that
+     vendor -- an AWS service row, a CockroachDB panel header -- never as
+     general decoration. */
+  --color-aws: #c2610a;
+  --color-crdb: #a63232;
+
+  /* The sidebar is a light surface in the light theme. A dark rail against
+     a light page reads as consumer-app chrome; Azure, GitHub, Linear and
+     Vercel all keep the rail in the same register as the content. */
+  --color-sidebar: #ffffff;
+  --color-sidebar-2: #f1f3f5;
+  --color-sidebar-active: #eff4ff;
+  --color-sidebar-ink: #17191c;
+  --color-sidebar-muted: #626b76;
+
+  /* Compatibility aliases for the previous hue-named tokens.
+     Components are being migrated to the semantic names above; until that is
+     finished these keep existing markup rendering, and crucially they now
+     resolve to the engineering palette rather than the old neon one. New code
+     must use the semantic names -- a hue name says nothing about what the
+     colour means, which is how a UI ends up with six accents. */
+  --color-violet: #2563eb;
+  --color-cyan: #0369a1;
+  --color-fuchsia: #0369a1;
+  --color-amber: #b45309;
+  --color-emerald: #15803d;
+  --color-rose: #b91c1c;
+
+  /* Radii. Controls 4, panels 6, major surfaces 8 -- nothing larger. */
+  --radius-control: 4px;
+  --radius-panel: 6px;
+  --radius-surface: 8px;
+
+  /* Shadows exist only for things that float above the page. Every other
+     surface separates with a border. */
+  --shadow-popover: 0 4px 12px rgb(23 25 28 / 8%), 0 1px 3px rgb(23 25 28 / 6%);
+  --shadow-modal: 0 16px 48px rgb(23 25 28 / 14%), 0 2px 8px rgb(23 25 28 / 8%);
+}
+
+html { color-scheme: light; }
+
+/* Dark theme. Same token names and the same semantic mapping, so no component
+   needs a dark: variant. State colours are lifted a step to hold equivalent
+   contrast against a dark surface; the soft fills become low-alpha tints of
+   the same hue rather than near-white panels. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-plane: #0f1115;
+  --color-surface: #171a21;
+  --color-surface-2: #1d222b;
+  --color-surface-3: #262c37;
+
+  --color-ink: #f3f4f6;
+  --color-ink-2: #9ca3af;
+  --color-muted: #6b7280;
+
+  --color-hairline: #2a303a;
+  --color-hairline-strong: #3a4250;
+
+  --color-accent: #4d86f7;
+  --color-accent-hover: #6b9bfa;
+  --color-accent-soft: #16233c;
+
+  --color-success: #34a95d;
+  --color-success-soft: #12241a;
+  --color-warning: #d98324;
+  --color-warning-soft: #2a1e10;
+  --color-error: #e05252;
+  --color-error-soft: #2c1516;
+  --color-info: #2b95d1;
+  --color-info-soft: #10222e;
+
+  --color-aws: #e08b3c;
+  --color-crdb: #d05a5a;
+
+  --color-sidebar: #12151a;
+  --color-sidebar-2: #1d222b;
+  --color-sidebar-active: #16233c;
+  --color-sidebar-ink: #f3f4f6;
+  --color-sidebar-muted: #9ca3af;
+
+  --color-violet: #4d86f7;
+  --color-cyan: #2b95d1;
+  --color-fuchsia: #2b95d1;
+  --color-amber: #d98324;
+  --color-emerald: #34a95d;
+  --color-rose: #e05252;
+
+  --shadow-popover: 0 4px 12px rgb(0 0 0 / 40%), 0 1px 3px rgb(0 0 0 / 30%);
+  --shadow-modal: 0 16px 48px rgb(0 0 0 / 55%), 0 2px 8px rgb(0 0 0 / 35%);
+}
+
+body {
+  margin: 0;
+  background: var(--color-plane);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#root { min-height: 100svh; }
+
+/* Panels separate by border, not elevation. `.card` is kept as a name because
+   a lot of existing markup references it, but it is now a flat bordered
+   surface -- the shadowed, heavily-rounded version read as consumer SaaS. */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-panel);
+}
+
+/* Tabular figures everywhere a number can change in place, so digits do not
+   reflow as values update over SSE. */
+.tabular { font-variant-numeric: tabular-nums; }
+
+input, select, textarea {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  padding: 6px 10px;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-control);
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+input::placeholder, textarea::placeholder { color: var(--color-muted); }
+input:focus, select:focus, textarea:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 16%, transparent);
+}
+
+button { font-family: var(--font-sans); cursor: pointer; }
+button:disabled { cursor: default; }
+
+/* Focus must be visible for keyboard users on every interactive element,
+   including graph nodes and table rows. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+::selection { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-hairline-strong);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-muted); background-clip: content-box; }
+
+/* Motion is information here: a drawing edge means a branch was created, a
+   pulsing node means a build is genuinely running. Under reduced-motion the
+   state still changes, it just arrives immediately. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Used by the execution trace and graph to mark a stage that is actually
+   running -- never applied speculatively. */
+@keyframes bmem-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+.running-pulse { animation: bmem-pulse 1.6s ease-in-out infinite; }
+
+@keyframes bmem-draw { to { stroke-dashoffset: 0; } }
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(99, 102, 241, 0.2), 0 0 5px rgba(99, 102, 241, 0.1); }
+  50% { box-shadow: 0 0 25px rgba(99, 102, 241, 0.45), 0 0 10px rgba(99, 102, 241, 0.25); }
+}
+
+@keyframes pulse-glow-success {
+  0%, 100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.25); }
+  50% { box-shadow: 0 0 22px rgba(16, 185, 129, 0.55); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-float {
+  animation: float-slow 4s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
+.animate-pulse-success {
+  animation: pulse-glow-success 2s ease-in-out infinite;
+}
+
+.glass-card {
+  background: color-mix(in srgb, var(--color-surface) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-hairline);
+}
+
+.gradient-border {
+  position: relative;
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.4));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+

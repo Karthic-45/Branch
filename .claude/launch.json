@@ -1,0 +1,32 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd /home/karthic/Desktop/Branchable-Memory && BMEM_FAKE_EMBEDDINGS=1 BMEM_FAKE_PLANNER=1 .venv/bin/uvicorn bmem.api:app --reload --reload-dir src --host 0.0.0.0 --port 8000 --app-dir src"
+      ],
+      "port": 8000
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd /home/karthic/Desktop/Branchable-Memory/web && npm run dev"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "api-real",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "set -a && . ./.env && set +a && .venv/bin/uvicorn bmem.api:app --reload --reload-dir src --host 0.0.0.0 --port 8000 --app-dir src"
+      ],
+      "port": 8000
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+version: 0.2
+
+# The evaluation sandbox.
+#
+# Each branch's candidate patch is applied to a clean checkout of the target
+# repository, and the repository's own test suite decides that branch's score.
+# This is model-generated code, so it runs in a throwaway CodeBuild container
+# with no database credentials, no Bedrock access, and write access to exactly
+# one S3 prefix.
+#
+# CodeBuild rather than ECS Fargate: same isolation, no VPC, no cluster, no
+# container registry. It is the right tool for "run a test suite against a patch".
+#
+# Environment variables supplied per-build by bmem.evaluate:
+#   RUN_ID        groups the four branches of one migration run
+#   BRANCH_ID     which branch's patch this is
+#   ARTIFACT_S3   s3://bucket/runs/<run>/<branch>
+#   TARGET_REPO   git URL of the repository under migration
+#   TARGET_REF    pinned commit, so the four branches are scored against an
+#                 identical baseline and their scores are comparable
+#   TEST_SELECTOR pytest path/-k expression; scoped for the live demo, full for
+#                 the recorded result
+
+phases:
+  install:
+    runtime-versions:
+      # Must match the target repo's pin, not the newest available. CTFd
+      # requires-python is >=3.11,<3.12: its Werkzeug/Flask pins call
+      # ast.Str, removed in 3.12. Under 3.12+ every branch silently scores
+      # near-zero from an environment mismatch, not a migration failure --
+      # and `pytest ... || true` below swallows the traceback that would
+      # have explained why. Confirmed locally 2026-07-28.
+      python: 3.11
+
+  pre_build:
+    commands:
+      - echo "run=${RUN_ID} branch=${BRANCH_ID}"
+      - git clone --quiet "${TARGET_REPO}" /tmp/target
+      # Empty TARGET_REF (a self-service-ingested root with no ref pinned at
+      # ingest time) means "whatever the default branch already landed on" --
+      # checkout with an empty string is a hard error, not a no-op, so it has
+      # to be skipped rather than passed through.
+      - '[ -n "${TARGET_REF}" ] && (cd /tmp/target && git checkout --quiet "${TARGET_REF}") || echo "no TARGET_REF pinned -- using the already-cloned default branch"'
+      # Recorded so a later "apply this winning patch for real" step can tell
+      # whether the repository has moved since this patch was scored, rather
+      # than silently applying it onto a commit it was never tested against.
+      - cd /tmp/target && git rev-parse HEAD > /tmp/base_sha.txt && cd -
+      - aws s3 cp "${ARTIFACT_S3}/candidate.patch" /tmp/candidate.patch
+      - aws s3 cp "${ARTIFACT_S3}/score_results.py" /tmp/score_results.py
+
+      # A strategy that emits a malformed diff scores zero. That is a real
+      # result about the strategy, not a build failure.
+      # --recount: Claude's diffs often carry wrong line counts in their @@
+      # hunk headers -- the first real CTFd runs failed with "corrupt patch at
+      # line 101" on patches whose bodies were fine. --recount derives the
+      # counts from the hunk body instead of trusting the header.
+      - cd /tmp/target && (git apply --recount --verbose /tmp/candidate.patch 2>/tmp/apply.log && echo APPLIED > /tmp/apply_status) || echo FAILED > /tmp/apply_status
+      - cat /tmp/apply_status
+
+      - cd /tmp/target && pip install --quiet -r requirements.txt || true
+      - cd /tmp/target && pip install --quiet -e . || true
+      # Test tooling. requirements.txt is runtime-only in most projects --
+      # CTFd declares pytest solely in pyproject's [dependency-groups] dev
+      # (PEP 735), so without this step `python -m pytest` exits with "No
+      # module named pytest", writes no report, and every branch scores 0
+      # regardless of its patch ("no_report_produced"). Try the standard
+      # places in order; pip >= 25.1 understands --group.
+      - pip install --quiet --upgrade "pip>=25.1" || true
+      - cd /tmp/target && (pip install --quiet --group dev 2>/dev/null || true)
+      - cd /tmp/target && for f in requirements-dev.txt requirements_dev.txt development.txt requirements/dev.txt requirements/test.txt; do [ -f "$f" ] && pip install --quiet -r "$f" || true; done
+      - python -c "import pytest" 2>/dev/null || pip install --quiet pytest
+      # Parallel when pytest-xdist is available (a full API suite can run past
+      # the evaluator's 15-minute wait serially); random ordering off so the
+      # branches of one run are scored on identical test order.
+      - python -c "import xdist" 2>/dev/null && echo "-n auto" > /tmp/pytest_parallel || echo "" > /tmp/pytest_parallel
+
+  build:
+    commands:
+      # `|| true` on pytest is deliberate: a low pass rate is the signal being
+      # collected, not an error. Only infrastructure faults should fail a build.
+      - cd /tmp/target && [ "$(cat /tmp/apply_status)" = "APPLIED" ] && (python -m pytest ${TEST_SELECTOR} $(cat /tmp/pytest_parallel) -p no:randomly --junitxml=/tmp/results.xml -q > /tmp/pytest.log 2>&1; tail -40 /tmp/pytest.log; true) || echo "patch did not apply; skipping tests"
+      - '[ "$(cat /tmp/apply_status)" = "APPLIED" ] && python /tmp/score_results.py /tmp/results.xml /tmp/result.json --base-sha "$(cat /tmp/base_sha.txt)" || python /tmp/score_results.py /tmp/results.xml /tmp/result.json --reason patch_did_not_apply --base-sha "$(cat /tmp/base_sha.txt)"'
+
+  post_build:
+    commands:
+      - aws s3 cp /tmp/result.json "${ARTIFACT_S3}/result.json"
+      - aws s3 cp /tmp/results.xml "${ARTIFACT_S3}/results.xml" || true
+      - aws s3 cp /tmp/apply.log "${ARTIFACT_S3}/apply.log" || true
+      - aws s3 cp /tmp/pytest.log "${ARTIFACT_S3}/pytest.log" || true
+      - cat /tmp/result.json

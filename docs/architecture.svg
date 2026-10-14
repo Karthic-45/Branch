@@ -1,0 +1,107 @@
+<svg viewBox="0 0 960 610" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace">
+  <style>
+    .box { stroke-width: 1.6; rx: 7; }
+    .title { font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; font-weight: 700; font-size: 14px; fill: #12141C; }
+    .sub { font-size: 10.5px; fill: #5A6072; }
+    .edge { stroke: #8B90A0; stroke-width: 1.4; fill: none; }
+    .edge-label { font-size: 9.5px; fill: #5A6072; }
+    .arrow { fill: #8B90A0; }
+  </style>
+
+  <rect x="0" y="0" width="960" height="610" fill="#FBFBFD"/>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" class="arrow"/>
+    </marker>
+  </defs>
+
+  <!-- Browser -->
+  <rect class="box" x="40" y="30" width="230" height="72" fill="#F4F6FB" stroke="#1B2A4A"/>
+  <text x="155" y="54" text-anchor="middle" class="title">Browser</text>
+  <text x="155" y="72" text-anchor="middle" class="sub">D3 branch tree, live via SSE</text>
+  <text x="155" y="86" text-anchor="middle" class="sub">merge log + revert button</text>
+
+  <!-- MCP client -->
+  <rect class="box" x="690" y="30" width="230" height="72" fill="#F1EEFB" stroke="#5B3FBF"/>
+  <text x="805" y="54" text-anchor="middle" class="title">Claude / MCP client</text>
+  <text x="805" y="72" text-anchor="middle" class="sub">"which hypothesis did the shim</text>
+  <text x="805" y="86" text-anchor="middle" class="sub">branch abandon?"</text>
+
+  <!-- FastAPI control plane -->
+  <rect class="box" x="40" y="160" width="230" height="92" fill="#F4F6FB" stroke="#1B2A4A"/>
+  <text x="155" y="184" text-anchor="middle" class="title">FastAPI control plane</text>
+  <text x="155" y="202" text-anchor="middle" class="sub">bmem.api -- REST + SSE</text>
+  <text x="155" y="216" text-anchor="middle" class="sub">plan -&gt; fork -&gt; explore -&gt;</text>
+  <text x="155" y="230" text-anchor="middle" class="sub">evaluate -&gt; merge</text>
+  <text x="155" y="245" text-anchor="middle" class="sub" font-style="italic">hosted on Elastic Beanstalk</text>
+
+  <!-- MCP audit server -->
+  <rect class="box" x="690" y="160" width="230" height="92" fill="#F1EEFB" stroke="#5B3FBF"/>
+  <text x="805" y="184" text-anchor="middle" class="title">bmem-audit MCP server</text>
+  <text x="805" y="202" text-anchor="middle" class="sub">5 tools, read-only, over stdio</text>
+  <text x="805" y="216" text-anchor="middle" class="sub">list/explain branches, search</text>
+  <text x="805" y="230" text-anchor="middle" class="sub">memory, list/reconstruct merges</text>
+  <text x="805" y="245" text-anchor="middle" class="sub" font-style="italic">never forks, merges, or reverts</text>
+
+  <!-- CockroachDB -->
+  <rect class="box" x="270" y="320" width="420" height="118" fill="#EAF1FE" stroke="#2B5CE6"/>
+  <text x="480" y="346" text-anchor="middle" class="title">CockroachDB Cloud</text>
+  <text x="480" y="366" text-anchor="middle" class="sub">branches · memory VECTOR(1024) · merge_log</text>
+  <text x="480" y="382" text-anchor="middle" class="sub">HLC watermark scoping + branch_id-prefixed vector index</text>
+  <text x="480" y="398" text-anchor="middle" class="sub">= one indexed query resolves a branch's whole ancestry</text>
+  <text x="480" y="418" text-anchor="middle" class="sub" font-style="italic">Distributed Vector Indexing · Managed MCP · ccloud CLI</text>
+
+  <!-- Bedrock -->
+  <rect class="box" x="40" y="490" width="230" height="80" fill="#FFF3E8" stroke="#B8631E"/>
+  <text x="155" y="514" text-anchor="middle" class="title">Bedrock</text>
+  <text x="155" y="533" text-anchor="middle" class="sub">Claude Sonnet 4.6 -- reasoning</text>
+  <text x="155" y="548" text-anchor="middle" class="sub">Titan Embed v2 -- 1024-dim vectors</text>
+  <text x="155" y="563" text-anchor="middle" class="sub">4 branches share a cached prefix</text>
+
+  <!-- S3 -->
+  <rect class="box" x="340" y="490" width="150" height="80" fill="#FFF3E8" stroke="#B8631E"/>
+  <text x="415" y="518" text-anchor="middle" class="title">S3</text>
+  <text x="415" y="538" text-anchor="middle" class="sub">repo snapshots</text>
+  <text x="415" y="552" text-anchor="middle" class="sub">candidate patches</text>
+  <text x="415" y="566" text-anchor="middle" class="sub">30-day expiry</text>
+
+  <!-- CodeBuild -->
+  <rect class="box" x="560" y="490" width="230" height="80" fill="#FFF3E8" stroke="#B8631E"/>
+  <text x="675" y="514" text-anchor="middle" class="title">CodeBuild</text>
+  <text x="675" y="533" text-anchor="middle" class="sub">sandboxed eval, per branch</text>
+  <text x="675" y="548" text-anchor="middle" class="sub">real pytest run against CTFd</text>
+  <text x="675" y="563" text-anchor="middle" class="sub">pass rate -&gt; branches.score</text>
+
+  <!-- Edges -->
+  <path class="edge" d="M155,102 L155,158" marker-end="url(#arrow)"/>
+  <text x="163" y="132" class="edge-label">SSE + REST</text>
+
+  <path class="edge" d="M805,102 L805,158" marker-end="url(#arrow)"/>
+  <text x="813" y="132" class="edge-label">MCP / stdio</text>
+
+  <path class="edge" d="M200,252 L400,318" marker-end="url(#arrow)"/>
+  <path class="edge" d="M760,252 L560,318" marker-end="url(#arrow)"/>
+  <text x="620" y="290" class="edge-label">reads (never writes)</text>
+
+  <path class="edge" d="M155,254 C155,340 250,420 340,488" marker-end="url(#arrow)"/>
+  <text x="150" y="400" class="edge-label">reasoning + embed</text>
+
+  <path class="edge" d="M240,254 C300,340 350,420 400,488" marker-end="url(#arrow)"/>
+  <text x="280" y="440" class="edge-label">artifacts</text>
+
+  <path class="edge" d="M490,530 L558,530" marker-end="url(#arrow)"/>
+
+  <path class="edge" d="M675,488 C675,460 600,400 480,438" marker-end="url(#arrow)"/>
+  <text x="620" y="465" class="edge-label">score write-back</text>
+
+  <!-- Legend -->
+  <rect x="40" y="590" width="10" height="10" fill="#F4F6FB" stroke="#1B2A4A"/>
+  <text x="56" y="599" class="sub">control plane / UI</text>
+  <rect x="220" y="590" width="10" height="10" fill="#EAF1FE" stroke="#2B5CE6"/>
+  <text x="236" y="599" class="sub">CockroachDB</text>
+  <rect x="360" y="590" width="10" height="10" fill="#FFF3E8" stroke="#B8631E"/>
+  <text x="376" y="599" class="sub">AWS</text>
+  <rect x="430" y="590" width="10" height="10" fill="#F1EEFB" stroke="#5B3FBF"/>
+  <text x="446" y="599" class="sub">MCP (read-only)</text>
+</svg>

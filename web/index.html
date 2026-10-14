@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Branchable Memory</title>
+    <script>
+      (function() {
+        try {
+          var t = localStorage.getItem('bmem-theme-mode') || 'light';
+          document.documentElement.dataset.theme = t;
+          if (t === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root">
+      <style>
+        #bmem-boot-loader {
+          position: fixed;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: #f8fafc;
+          color: #0f172a;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+          z-index: 99999;
+          user-select: none;
+        }
+        [data-theme="dark"] #bmem-boot-loader, .dark #bmem-boot-loader {
+          background: #0c0e14;
+          color: #f8fafc;
+        }
+        @keyframes bmem-spin { to { transform: rotate(360deg); } }
+        @keyframes bmem-shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
+        .bmem-spinner-box {
+          position: relative;
+          width: 72px;
+          height: 72px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 20px;
+        }
+        .bmem-glow-bg {
+          position: absolute;
+          inset: 0;
+          border-radius: 20px;
+          background: rgba(99, 102, 241, 0.25);
+          filter: blur(14px);
+        }
+        .bmem-spin-ring {
+          position: absolute;
+          inset: -3px;
+          border-radius: 20px;
+          background: conic-gradient(from 0deg, #6366f1, #3b82f6, #10b981, transparent 70%);
+          animation: bmem-spin 2s linear infinite;
+        }
+        .bmem-icon-core {
+          position: relative;
+          z-index: 2;
+          width: 56px;
+          height: 56px;
+          border-radius: 16px;
+          background: linear-gradient(135deg, #6366f1, #4f46e5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.45);
+        }
+        .bmem-bar-track {
+          width: 170px;
+          height: 4px;
+          border-radius: 999px;
+          background: rgba(148, 163, 184, 0.25);
+          overflow: hidden;
+          position: relative;
+          margin-top: 18px;
+        }
+        .bmem-bar-fill {
+          position: absolute;
+          inset: 0;
+          width: 50%;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #6366f1, #3b82f6, #10b981);
+          animation: bmem-shimmer 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+      </style>
+      <div id="bmem-boot-loader">
+        <div class="bmem-spinner-box">
+          <div class="bmem-glow-bg"></div>
+          <div class="bmem-spin-ring"></div>
+          <div class="bmem-icon-core">
+            <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
+              <polygon points="20,8 32,15 20,22 8,15" fill="#c7d2fe" />
+              <polygon points="8,15 20,22 20,34 8,27" fill="#6366f1" />
+              <polygon points="20,22 32,15 32,27 20,34" fill="#4338ca" />
+            </svg>
+          </div>
+        </div>
+        <div style="font-weight: 700; font-size: 19px; letter-spacing: -0.02em;">Branchable Memory</div>
+        <div style="font-size: 12px; opacity: 0.7; margin-top: 4px; font-weight: 500;">Agent Belief OS</div>
+        <div class="bmem-bar-track">
+          <div class="bmem-bar-fill"></div>
+        </div>
+        <div style="font-size: 11px; opacity: 0.6; font-family: ui-monospace, monospace; margin-top: 12px;">Loading branch state &amp; indices...</div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

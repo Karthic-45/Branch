@@ -1,0 +1,30 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+.env
+.env.local
+*.pem
+*.crt
+
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Ingested target repo + local artifacts
+.work/
+*.log
+
+# web/ (React frontend) -- dist/ above already covers web/dist
+node_modules/
+
+# Populated by web/'s build at Docker build time (see Dockerfile); tracking
+# the directory itself, not what's built into it, is what lets a fresh
+# clone still have somewhere for FastAPI to mount before anyone runs a build.
+src/bmem/static/*
+!src/bmem/static/.gitkeep

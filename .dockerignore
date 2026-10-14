@@ -1,0 +1,16 @@
+.venv/
+.git/
+.claude/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.env
+tests/
+demo/
+docs/
+infra/
+web/
+schema/
+*.log
+.work/
