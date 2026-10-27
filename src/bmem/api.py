@@ -111,7 +111,18 @@ app = FastAPI(title="Branchable Memory")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 _STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-if os.path.isdir(_STATIC_DIR):
+if not os.path.isfile(os.path.join(_STATIC_DIR, "index.html")):
+    for candidate in [
+        "/app/src/bmem/static",
+        os.path.join(os.getcwd(), "src", "bmem", "static"),
+        os.path.join(os.getcwd(), "web", "dist"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "web", "dist"),
+    ]:
+        if os.path.isfile(os.path.join(candidate, "index.html")):
+            _STATIC_DIR = candidate
+            break
+
+if os.path.isdir(_STATIC_DIR) and os.path.isfile(os.path.join(_STATIC_DIR, "index.html")):
     # Mounted at /static (not /), so a catch-all static prefix can never
     # shadow the /api/* routes below regardless of registration order. The
     # explicit "/" route just below is what makes the demo page reachable at
@@ -121,6 +132,7 @@ if os.path.isdir(_STATIC_DIR):
     @app.get("/")
     def index() -> FileResponse:
         return FileResponse(os.path.join(_STATIC_DIR, "index.html"))
+
 
 
 # Process events (fork/explore/evaluate/merge, one line per stage

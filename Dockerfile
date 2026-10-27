@@ -24,16 +24,17 @@ COPY src/ ./src/
 # read it from disk to upload it. In a source checkout it is found at
 # <repo>/infra/; once pip-installed there is no repo, so it ships inside the
 # package instead -- see _find_score_results in evaluate.py.
-COPY infra/score_results.py ./src/bmem/score_results.py
-RUN pip install --no-cache-dir .
-
-# The built frontend lands where api.py already expects and serves static
-# assets from -- overwrites the placeholder .gitkeep, nothing else needed on
-# the FastAPI side.
+# Copy the built frontend into static directory BEFORE pip install
 COPY --from=web-build /web/dist/ ./src/bmem/static/
+
+RUN pip install --no-cache-dir -e .
+
+# Also copy into site-packages in case package is imported non-editable
+RUN python -c "import bmem, shutil; shutil.copytree('/web/dist', bmem.__path__[0] + '/static', dirs_exist_ok=True)" || true
 
 EXPOSE 8000
 
 ENV PORT=8000
 CMD ["sh", "-c", "uvicorn bmem.api:app --host 0.0.0.0 --port ${PORT:-8000}"]
+
 
