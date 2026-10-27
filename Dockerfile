@@ -14,7 +14,10 @@ RUN npm run build
 
 FROM python:3.12-slim
 
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
+
 
 # Dependencies before source: this layer only invalidates when pyproject.toml
 # changes, not on every code edit.
