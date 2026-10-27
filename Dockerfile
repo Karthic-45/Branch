@@ -18,7 +18,7 @@ WORKDIR /app
 
 # Dependencies before source: this layer only invalidates when pyproject.toml
 # changes, not on every code edit.
-COPY pyproject.toml ./
+COPY pyproject.toml README.md ./
 COPY src/ ./src/
 # score_results.py runs inside the CodeBuild sandbox, but bmem.evaluate has to
 # read it from disk to upload it. In a source checkout it is found at
@@ -34,7 +34,6 @@ COPY --from=web-build /web/dist/ ./src/bmem/static/
 
 EXPOSE 8000
 
-# Not --reload: that watches the filesystem for changes, which is a
-# development-time behavior with no purpose in a container that is rebuilt
-# and redeployed on every change instead.
-CMD ["uvicorn", "bmem.api:app", "--host", "0.0.0.0", "--port", "8000"]
+ENV PORT=8000
+CMD ["sh", "-c", "uvicorn bmem.api:app --host 0.0.0.0 --port ${PORT:-8000}"]
+

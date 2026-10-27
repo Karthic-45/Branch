@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { PageSkeleton } from "../common/Loading";
+import { CountUp } from "../common/Motion";
 import { motion } from "framer-motion";
 import {
   GitBranch, Trophy, Clock, Plus, Download,
@@ -874,7 +875,9 @@ function StatCard({
           <Icon className="h-4 w-4" />
         </div>
       </div>
-      <div className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">{value}</div>
+      <div className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        {typeof value === "number" ? <CountUp value={value} /> : value}
+      </div>
       <div className={`mt-1 text-[11px] font-semibold ${NOTE_TONE[tone]}`}>{note}</div>
     </motion.div>
   );
@@ -882,46 +885,56 @@ function StatCard({
 
 function IsometricHeroGraphic() {
   return (
-    <div className="relative w-64 h-56 flex items-center justify-center animate-float">
+    <div className="relative w-64 h-56 flex items-center justify-center">
       <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/20 via-blue-500/15 to-cyan-400/20 rounded-full blur-2xl" />
       <svg viewBox="0 0 280 240" className="w-full h-full relative z-10 drop-shadow-xl" fill="none">
-        <path d="M70 120 L140 60 L210 120 L140 180 Z" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="1.5" strokeDasharray="3 3" />
-        <path d="M140 60 L140 180" stroke="rgba(59, 130, 246, 0.4)" strokeWidth="1.5" strokeDasharray="3 3" />
-        <path d="M70 120 L210 120" stroke="rgba(16, 185, 129, 0.4)" strokeWidth="1.5" strokeDasharray="3 3" />
+        <path d="M70 120 L140 60 L210 120 L140 180 Z" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="1.5" strokeDasharray="3 3" style={{ animation: "bm-dash 1.6s linear infinite" }} />
+        <path d="M140 60 L140 180" stroke="rgba(59, 130, 246, 0.4)" strokeWidth="1.5" strokeDasharray="3 3" style={{ animation: "bm-dash 1.6s linear infinite" }} />
+        <path d="M70 120 L210 120" stroke="rgba(16, 185, 129, 0.4)" strokeWidth="1.5" strokeDasharray="3 3" style={{ animation: "bm-dash 1.6s linear infinite" }} />
 
         <g transform="translate(140, 50)">
+          <g className="bm-float" style={{ animationDelay: "0.0s" }}>
           <polygon points="0,-18 20,-7 0,4 -20,-7" fill="#6366f1" />
           <polygon points="-20,-7 0,4 0,26 -20,15" fill="#4f46e5" />
           <polygon points="0,4 20,-7 20,15 0,26" fill="#4338ca" />
           <text x="0" y="-23" textAnchor="middle" fill="#4f46e5" fontSize="10" fontWeight="bold">Explore</text>
+          </g>
         </g>
 
         <g transform="translate(65, 115)">
+          <g className="bm-float" style={{ animationDelay: "0.4s" }}>
           <polygon points="0,-18 20,-7 0,4 -20,-7" fill="#3b82f6" />
           <polygon points="-20,-7 0,4 0,26 -20,15" fill="#2563eb" />
           <polygon points="0,4 20,-7 20,15 0,26" fill="#1d4ed8" />
           <text x="-12" y="-23" textAnchor="middle" fill="#2563eb" fontSize="10" fontWeight="bold">Fork</text>
+          </g>
         </g>
 
         <g transform="translate(140, 115)">
+          <g className="bm-float" style={{ animationDelay: "0.8s" }}>
           <polygon points="0,-22 25,-8 0,6 -25,-8" fill="#818cf8" />
           <polygon points="-25,-8 0,6 0,34 -25,20" fill="#6366f1" />
           <polygon points="0,6 25,-8 25,20 0,34" fill="#4f46e5" />
           <text x="0" y="50" textAnchor="middle" fill="#4338ca" fontSize="10" fontWeight="bold">Score</text>
+          </g>
         </g>
 
         <g transform="translate(215, 115)">
+          <g className="bm-float" style={{ animationDelay: "1.2s" }}>
           <polygon points="0,-18 20,-7 0,4 -20,-7" fill="#10b981" />
           <polygon points="-20,-7 0,4 0,26 -20,15" fill="#059669" />
           <polygon points="0,4 20,-7 20,15 0,26" fill="#047857" />
           <text x="12" y="-23" textAnchor="middle" fill="#059669" fontSize="10" fontWeight="bold">Merge</text>
+          </g>
         </g>
 
         <g transform="translate(140, 180)">
+          <g className="bm-float" style={{ animationDelay: "1.6s" }}>
           <polygon points="0,-18 20,-7 0,4 -20,-7" fill="#06b6d4" />
           <polygon points="-20,-7 0,4 0,26 -20,15" fill="#0891b2" />
           <polygon points="0,4 20,-7 20,15 0,26" fill="#0e7490" />
           <text x="0" y="42" textAnchor="middle" fill="#0891b2" fontSize="10" fontWeight="bold">Revert</text>
+          </g>
         </g>
       </svg>
     </div>

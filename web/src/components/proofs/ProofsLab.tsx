@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Play, Loader2, ShieldCheck, ShieldAlert,
-  Lock, Copy, Clock, Zap, ArrowRight, CircleDashed,
+  Lock, Copy, Clock, Zap, ArrowRight,
 } from "lucide-react";
 import {
   fetchClusterStats, runCowProof, runIsolationProof, runResilienceProof, runTemporalProof,
@@ -107,7 +107,7 @@ export function ProofsLab({ onToast }: Props) {
               <Headline verdict={iso.verdict} text={iso.headline} />
               <Steps steps={iso.steps} />
             </div>
-          ) : <NotRun />}
+          ) : <NotRun kind="isolation" />}
         </ProofCard>
 
         {/* ── 2. Copy-on-write ── */}
@@ -144,7 +144,7 @@ export function ProofsLab({ onToast }: Props) {
               <Headline verdict={cow.verdict} text={cow.headline} />
               <Steps steps={cow.steps} />
             </div>
-          ) : <NotRun />}
+          ) : <NotRun kind="cow" />}
         </ProofCard>
 
         {/* ── 3. Temporal ── */}
@@ -171,7 +171,7 @@ export function ProofsLab({ onToast }: Props) {
               <Headline verdict={temp.verdict} text={temp.headline} />
               <Steps steps={temp.steps} />
             </div>
-          ) : <NotRun />}
+          ) : <NotRun kind="temporal" />}
         </ProofCard>
 
         {/* ── 4. Resilience ── */}
@@ -213,7 +213,7 @@ export function ProofsLab({ onToast }: Props) {
               <Headline verdict={res.verdict} text={res.headline} />
               <Steps steps={res.steps} />
             </div>
-          ) : <NotRun />}
+          ) : <NotRun kind="resilience" />}
         </ProofCard>
       </div>
     </div>
@@ -282,13 +282,82 @@ function ProofCard({
   );
 }
 
-function NotRun() {
+/* Before a proof runs, show *how* it works -- an illustration of the method,
+   labelled as such. No numbers appear until the proof has really run. */
+function NotRun({ kind }: { kind: "isolation" | "cow" | "temporal" | "resilience" }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-1.5 py-6 text-center">
-      <CircleDashed className="h-5 w-5 text-slate-300 dark:text-slate-600" />
-      <p className="text-xs font-medium text-slate-500">Not run yet</p>
-      <p className="text-[11px] text-slate-400">Press Run proof to execute it against the live cluster.</p>
+    <div className="flex flex-col items-center gap-2 py-3 text-center">
+      <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">How it works</span>
+      <svg viewBox="0 0 320 102" className="h-24 w-full max-w-sm" aria-hidden>
+        <defs>
+          <marker id={`arr-${kind}`} viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L8,4 L0,8 z" className="fill-slate-400" />
+          </marker>
+        </defs>
+        {kind === "isolation" && (
+          <>
+            <Box x={20} y={30} w={90} label="Branch A" sub="writes secret" tone="indigo" />
+            <Box x={210} y={30} w={90} label="Branch B" sub="searches for it" tone="indigo" />
+            <line x1={112} y1={48} x2={208} y2={48} className="stroke-slate-300" strokeWidth={2} strokeDasharray="5 5" style={{ animation: "bm-dash 1.2s linear infinite" }} />
+            <g className="bm-pop" style={{ animationDelay: "0.6s" }}>
+              <circle cx={160} cy={48} r={12} className="fill-rose-50 stroke-rose-400" strokeWidth={2} />
+              <path d="M154 42 L166 54 M166 42 L154 54" className="stroke-rose-500" strokeWidth={2.5} strokeLinecap="round" />
+            </g>
+          </>
+        )}
+        {kind === "cow" && (
+          <>
+            <Box x={14} y={30} w={80} label="1 parent" sub="200 memories" tone="indigo" />
+            {[0, 1, 2, 3, 4].map((i) => (
+              <g key={i}>
+                <path d={`M96 48 C 150 48, 160 ${12 + i * 15}, 214 ${12 + i * 15}`} fill="none" className="stroke-slate-300 bm-draw" strokeWidth={1.5} style={{ animationDelay: `${i * 0.12}s` }} />
+                <rect x={216} y={6 + i * 15} width={60} height={11} rx={3} className="fill-emerald-50 stroke-emerald-300 bm-pop" style={{ animationDelay: `${0.4 + i * 0.1}s` }} />
+              </g>
+            ))}
+            <text x={284} y={52} className="fill-slate-500 text-[11px] font-bold">×50</text>
+            <text x={160} y={98} textAnchor="middle" className="fill-slate-400 text-[9.5px]">each fork = one branch row, 0 memories copied</text>
+          </>
+        )}
+        {kind === "temporal" && (
+          <>
+            {["Before", "Merge", "Time travel", "Revert"].map((t, i) => (
+              <g key={t} className="bm-pop" style={{ animationDelay: `${i * 0.15}s` }}>
+                <circle cx={36 + i * 82} cy={40} r={13} className={i === 2 ? "fill-indigo-500" : "fill-white stroke-indigo-400"} strokeWidth={2} />
+                <text x={36 + i * 82} y={74} textAnchor="middle" className="fill-slate-500 text-[10.5px] font-medium">{t}</text>
+              </g>
+            ))}
+            {[0, 1, 2].map((i) => (
+              <line key={i} x1={51 + i * 82} y1={40} x2={103 + i * 82} y2={40} className="stroke-slate-300 bm-draw" strokeWidth={2} markerEnd={`url(#arr-${kind})`} style={{ animationDelay: `${0.2 + i * 0.15}s` }} />
+            ))}
+          </>
+        )}
+        {kind === "resilience" && (
+          <>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <g key={i} className="bm-pop" style={{ animationDelay: `${i * 0.08}s` }}>
+                <rect x={14} y={6 + i * 17} width={66} height={12} rx={3} className={i === 2 ? "fill-rose-100 stroke-rose-400" : "fill-blue-50 stroke-blue-300"} />
+                <text x={47} y={15 + i * 17} textAnchor="middle" className={`text-[8.5px] font-semibold ${i === 2 ? "fill-rose-600" : "fill-blue-600"}`}>{i === 2 ? "crash" : `worker ${i + 1}`}</text>
+                <line x1={82} y1={12 + i * 17} x2={196} y2={48} className={i === 2 ? "stroke-rose-300" : "stroke-slate-300"} strokeWidth={1.4} strokeDasharray={i === 2 ? "3 3" : undefined} />
+              </g>
+            ))}
+            <Box x={198} y={30} w={108} label="Orchestrator" sub="tree stays consistent" tone="emerald" />
+          </>
+        )}
+      </svg>
+      <p className="text-[11px] text-slate-400">Not run yet — press Run proof to measure it on the live cluster.</p>
     </div>
+  );
+}
+
+function Box({ x, y, w, label, sub, tone }: { x: number; y: number; w: number; label: string; sub: string; tone: "indigo" | "emerald" }) {
+  const fill = tone === "indigo" ? "fill-indigo-50 stroke-indigo-300" : "fill-emerald-50 stroke-emerald-300";
+  const ink = tone === "indigo" ? "fill-indigo-700" : "fill-emerald-700";
+  return (
+    <g className="bm-pop">
+      <rect x={x} y={y} width={w} height={36} rx={8} className={fill} strokeWidth={1.5} />
+      <text x={x + w / 2} y={y + 15} textAnchor="middle" className={`${ink} text-[11px] font-bold`}>{label}</text>
+      <text x={x + w / 2} y={y + 28} textAnchor="middle" className="fill-slate-500 text-[8.5px]">{sub}</text>
+    </g>
   );
 }
 

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   LayoutDashboard, GitBranch, Network, Database, Rocket, Activity, ShieldCheck,
   FileText, ScrollText, PanelLeftClose, PanelLeft, Sun, Moon, Search, Command,
-  Bell, HelpCircle, ChevronRight, GitFork, Boxes, Cloud
+  Bell, HelpCircle, ChevronRight, GitFork, Boxes, Cloud, Terminal
 } from "lucide-react";
 import type { Theme } from "../../hooks/useTheme";
 import type { ConnState, ReadinessReport } from "../../lib/types";
@@ -12,7 +12,7 @@ import { TopProgress } from "../common/Loading";
 
 export type Section =
   | "overview" | "decisions" | "branches" | "memory"
-  | "deployments" | "observability" | "aws" | "proofs" | "reports" | "audit" | "judge";
+  | "deployments" | "observability" | "aws" | "outputs" | "proofs" | "reports" | "audit" | "judge";
 
 const NAV_ITEMS: { key: Section; label: string; icon: typeof GitBranch }[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
@@ -22,6 +22,7 @@ const NAV_ITEMS: { key: Section; label: string; icon: typeof GitBranch }[] = [
   { key: "deployments", label: "Deployments", icon: Rocket },
   { key: "observability", label: "System / Observability", icon: Activity },
   { key: "aws", label: "AWS Storage", icon: Cloud },
+  { key: "outputs", label: "AWS Outputs", icon: Terminal },
   { key: "proofs", label: "Proofs", icon: ShieldCheck },
   { key: "reports", label: "Reports & Exports", icon: FileText },
   { key: "audit", label: "Audit & Judge Mode", icon: ScrollText },

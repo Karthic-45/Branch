@@ -6,7 +6,7 @@ import { fetchBranchVerdicts } from "../../lib/api";
 import { VerdictBox } from "./VerdictBox";
 import { PageSkeleton } from "../common/Loading";
 import type { Theme } from "../../hooks/useTheme";
-import { BranchTree } from "../BranchTree";
+import { LineageTree } from "./LineageTree";
 
 interface Props {
   rootId?: string | null;
@@ -33,7 +33,7 @@ interface CardItem {
   total?: number | null;
 }
 
-export function BranchesPage({ rootId, nodes, branchStage, theme, onSelectBranch, loading = false }: Props) {
+export function BranchesPage({ rootId, nodes, branchStage, onSelectBranch, loading = false }: Props) {
   const [viewMode, setViewMode] = useState<"tree" | "cards">("tree");
   const [verdicts, setVerdicts] = useState<Map<string, BranchVerdict>>(new Map());
 
@@ -177,10 +177,9 @@ export function BranchesPage({ rootId, nodes, branchStage, theme, onSelectBranch
         {/* View Mode: Live Branch Tree or Cards */}
         {viewMode === "tree" ? (
           <div className="rounded-xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30 p-2 min-h-[360px]">
-            <BranchTree
+            <LineageTree
               nodes={nodes}
               branchStage={branchStage}
-              theme={theme}
               onSelect={onSelectBranch}
             />
           </div>

@@ -17,7 +17,7 @@ interface PdfPageProxy {
     transform?: number[];
   }): PdfRenderTask;
 }
-interface PDFDocumentProxy {
+export interface PDFDocumentProxy {
   numPages: number;
   getPage(n: number): Promise<PdfPageProxy>;
   destroy(): Promise<void>;
@@ -30,7 +30,7 @@ interface PdfJs {
 const PDFJS_BASE = `${import.meta.env.BASE_URL}vendor/pdfjs/`;
 let pdfjsPromise: Promise<PdfJs> | null = null;
 
-function loadPdfJs(): Promise<PdfJs> {
+export function loadPdfJs(): Promise<PdfJs> {
   pdfjsPromise ??= import(/* @vite-ignore */ `${PDFJS_BASE}pdf.min.mjs`).then((mod: PdfJs) => {
     mod.GlobalWorkerOptions.workerSrc = `${PDFJS_BASE}pdf.worker.min.mjs`;
     return mod;
@@ -258,7 +258,7 @@ function IconBtn({ label, onClick, children }: { label: string; onClick: () => v
 }
 
 /** One page, drawn to a canvas at device resolution, only once it scrolls near view. */
-function PdfPage({
+export function PdfPage({
   doc, pageNumber, zoom, availableWidth,
 }: {
   doc: PDFDocumentProxy;

@@ -9,8 +9,8 @@ __pycache__/
 tests/
 demo/
 docs/
-infra/
-web/
+web/node_modules/
 schema/
 *.log
 .work/
+

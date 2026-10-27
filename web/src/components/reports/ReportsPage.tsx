@@ -4,6 +4,7 @@ import { FileText, Download, Eye, Archive, FileCode, Loader2, CheckCircle2, XCir
 import { engineeringReportUrl, executiveReportUrl, projectArchiveUrl } from "../../lib/api";
 import { PdfPreview } from "./PdfPreview";
 import { ArchiveTree } from "./ArchiveTree";
+import { InlinePdf } from "./InlinePdf";
 
 /* Reports are rendered by the backend on request from the current database
    state. This page only ever states what a real request returned: the bytes
@@ -28,6 +29,7 @@ export function ReportsPage({ rootId, onToast }: Props) {
   const [preview, setPreview] = useState<{ title: string; url: string; filename: string } | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [last, setLast] = useState<DownloadRecord | null>(null);
+  const [inlineId, setInlineId] = useState("executive");
 
   if (!rootId) {
     return (
@@ -165,6 +167,34 @@ export function ReportsPage({ rootId, onToast }: Props) {
           <ArchiveTree rootId={rootId} />
         </div>
 
+        <div className="space-y-6">
+        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#11141c] p-5 shadow-xs space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">PDF Preview</h2>
+            <div className="flex rounded-lg border border-slate-200 p-0.5 dark:border-slate-700">
+              {reports.filter((r) => r.pdf).map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => setInlineId(r.id)}
+                  className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors ${inlineId === r.id ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"}`}
+                >
+                  {r.title.replace(" Report", "")}
+                </button>
+              ))}
+            </div>
+          </div>
+          {(() => {
+            const r = reports.find((x) => x.id === inlineId) ?? reports[0];
+            return (
+              <InlinePdf
+                key={r.id}
+                url={r.url}
+                title={r.filename}
+                onExpand={() => setPreview({ title: r.title, url: r.url, filename: r.filename })}
+              />
+            );
+          })()}
+        </div>
         <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#11141c] p-6 shadow-xs space-y-4">
           <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">Last download</h2>
           {!last ? (
@@ -190,6 +220,7 @@ export function ReportsPage({ rootId, onToast }: Props) {
               <Meta k="Requested" v={last.at.toLocaleString()} />
             </div>
           )}
+        </div>
         </div>
       </div>
 

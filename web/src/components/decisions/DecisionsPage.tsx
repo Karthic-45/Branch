@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { RotateCcw, Play, Loader2, Scale, Trophy, CheckCircle2, AlertCircle, Check } from "lucide-react";
-import type { ApplyResult, BranchVerdict, DecisionNode, MergeRow } from "../../lib/types";
-import { applyMerge, fetchBranchVerdicts, revertMerge } from "../../lib/api";
+import type { ApplyResult, AwsBuilds, BranchVerdict, Counterfactual, DecisionNode, MergeRow } from "../../lib/types";
+import { applyMerge, fetchAwsBuilds, fetchBranchVerdicts, fetchCounterfactual, revertMerge } from "../../lib/api";
 import { VerdictBox } from "../branches/VerdictBox";
 import { PageSkeleton, Shimmer } from "../common/Loading";
 import { CounterfactualPanel } from "../CounterfactualPanel";
@@ -245,36 +245,34 @@ export function DecisionsPage({
                   </p>
                 </div>
 
-                {/* Stat highlight cards */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-3.5 text-center">
-                    <div className="text-[11px] font-medium text-slate-400">Winning Score</div>
-                    <div className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
-                      {activeNode.winner_score !== null ? `${(activeNode.winner_score * 100).toFixed(1)}%` : "—"}
-                    </div>
-                  </div>
+                {/* Headline numbers for the winner, from its recorded test result,
+                    patch statistics and CodeBuild build. */}
+                <WinnerStats node={activeNode} rootId={rootId} />
 
-                  <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-3.5 text-center">
-                    <div className="text-[11px] font-medium text-slate-400">Winning Branch</div>
-                    <div className="text-xl font-extrabold text-slate-900 dark:text-white mt-1 font-mono">
-                      {activeNode.winner_branch_id.slice(0, 8)}
+                {/* Key reasons: the winner's own verdict, one fact per line */}
+                {(() => {
+                  const wv = verdicts.find((v) => v.branch_id === activeNode.winner_branch_id);
+                  if (!wv || wv.reasons.length === 0) return null;
+                  return (
+                    <div className="rounded-xl border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20 p-4">
+                      <div className="mb-2 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Key reasons</div>
+                      <ul className="space-y-1.5">
+                        {wv.reasons.map((r, i) => (
+                          <motion.li
+                            key={r}
+                            initial={{ opacity: 0, x: -6 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.08 * i }}
+                            className="flex items-start gap-2 text-[12.5px] text-slate-700 dark:text-slate-300"
+                          >
+                            <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-none text-emerald-500" />
+                            {r}
+                          </motion.li>
+                        ))}
+                      </ul>
                     </div>
-                  </div>
-
-                  <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-3.5 text-center">
-                    <div className="text-[11px] font-medium text-slate-400">Alternatives Evaluated</div>
-                    <div className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
-                      {activeNode.alternatives?.length ?? 0}
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-3.5 text-center">
-                    <div className="text-[11px] font-medium text-slate-400">Tie Broken</div>
-                    <div className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
-                      {activeNode.tie_detected ? "Yes" : "No"}
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 {/* Comparison with Other Hypotheses */}
                 <StrategyComparisonsSection activeNode={activeNode} />
@@ -395,6 +393,55 @@ export function DecisionsPage({
   );
 }
 
+function WinnerStats({ node, rootId }: { node: DecisionNode; rootId: string | null }) {
+  const [cf, setCf] = useState<Counterfactual | null>(null);
+  const [builds, setBuilds] = useState<AwsBuilds | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setCf(null);
+    fetchCounterfactual(node.merge_id).then((c) => { if (!cancelled) setCf(c); }).catch(() => {});
+    if (rootId) fetchAwsBuilds(rootId).then((b) => { if (!cancelled) setBuilds(b); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [node.merge_id, rootId]);
+
+  const w = cf?.winner ?? null;
+  const ps = w?.patch_stats ?? null;
+  const build = builds?.builds.find((b) => b.branch_id === node.winner_branch_id);
+  const secs = build?.start_time && build.end_time
+    ? (Date.parse(build.end_time) - Date.parse(build.start_time)) / 1000 : null;
+  const tiles: { label: string; value: React.ReactNode; sub: string }[] = [
+    {
+      label: "Test Score",
+      value: node.winner_score !== null ? `${(node.winner_score * 100).toFixed(1)}%` : "—",
+      sub: w?.total ? `${w.passed}/${w.total} tests` : "no test count",
+    },
+    { label: "Files Changed", value: ps ? ps.files_changed : "—", sub: ps ? `${ps.files_created} new` : "not recorded" },
+    {
+      label: "Patch Size",
+      value: ps ? (
+        <span><span className="text-emerald-600">+{ps.lines_added}</span> / <span className="text-rose-600">−{ps.lines_removed}</span></span>
+      ) : "—",
+      sub: ps ? `risk ${ps.risk}` : "not recorded",
+    },
+    {
+      label: "Execution Time",
+      value: secs !== null ? `${Math.floor(secs / 60)}m ${String(Math.round(secs % 60)).padStart(2, "0")}s` : "—",
+      sub: build ? `CodeBuild #${build.build_number}` : "no build found",
+    },
+  ];
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {tiles.map((t) => (
+        <div key={t.label} className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-3.5 text-center">
+          <div className="text-[11px] font-medium text-slate-400">{t.label}</div>
+          <div className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">{t.value}</div>
+          <div className="text-[10.5px] text-slate-400">{t.sub}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function StrategyComparisonsSection({ activeNode }: { activeNode: DecisionNode }) {
   const winnerPct = activeNode.winner_score !== null ? Math.round(activeNode.winner_score * 100) : 100;
   const alternatives = activeNode.alternatives ?? [];
@@ -429,7 +476,7 @@ function StrategyComparisonsSection({ activeNode }: { activeNode: DecisionNode }
           {activeNode.tie_detected && (
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/40 text-amber-700 dark:text-amber-300 text-xs font-medium">
               <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
-              <span>Tie Broken by Planner</span>
+              <span>Tie broken by the change-size rule</span>
             </span>
           )}
           <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-slate-600 dark:text-slate-400 text-xs font-medium">

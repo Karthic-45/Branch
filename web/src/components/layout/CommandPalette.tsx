@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, CornerDownLeft, Play, Network, GitBranch, Database, ShieldCheck,
-  FileText, ScrollText, Activity, Rocket, Presentation, Cloud,
+  FileText, ScrollText, Activity, Rocket, Presentation, Cloud, Terminal,
 } from "lucide-react";
 import type { BranchNode, DecisionNode, MergeRow } from "../../lib/types";
 import type { Section } from "./AppShell";
@@ -62,6 +62,7 @@ export function CommandPalette({
       { id: "nav-deployments", label: "Go to Deployments", group: "Navigate", icon: Rocket, run: () => onNavigate("deployments") },
       { id: "nav-observability", label: "Go to Observability", group: "Navigate", icon: Activity, run: () => onNavigate("observability") },
       { id: "nav-aws", label: "Go to AWS Storage", group: "Navigate", icon: Cloud, run: () => onNavigate("aws") },
+      { id: "nav-outputs", label: "Go to AWS Outputs", group: "Navigate", icon: Terminal, run: () => onNavigate("outputs") },
       { id: "nav-proofs", label: "Go to Proofs", group: "Navigate", icon: ShieldCheck, run: () => onNavigate("proofs") },
       { id: "nav-reports", label: "Go to Reports", group: "Navigate", icon: FileText, run: () => onNavigate("reports") },
       { id: "nav-audit", label: "Go to Audit", group: "Navigate", icon: ScrollText, hint: "G A", run: () => onNavigate("audit") },

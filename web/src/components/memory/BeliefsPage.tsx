@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
-import { Search, Eye, Copy, Check, ChevronDown, Database } from "lucide-react";
+import { Search, Eye, Copy, Check, ChevronDown, Database, Layers, PenLine, Eraser, Timer } from "lucide-react";
 import type { BranchNode, BeliefPage } from "../../lib/types";
 import { fetchBeliefs } from "../../lib/api";
 import { TableRowsSkeleton } from "../common/Loading";
+import { CountUp } from "../common/Motion";
 
 interface Props {
   rootId: string | null;
@@ -187,7 +188,7 @@ export function BeliefsPage({ rootId, nodes }: Props) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
           <div className="rounded-xl border border-indigo-100 dark:border-indigo-950/60 bg-indigo-50/50 dark:bg-indigo-950/30 p-3.5 text-center">
             <div className="text-2xl font-extrabold text-indigo-700 dark:text-indigo-300">
-              {visibleCount}
+              <span className="inline-flex items-center gap-2"><Layers className="h-5 w-5 opacity-60" /><CountUp value={visibleCount} /></span>
             </div>
             <div className="text-xs font-semibold text-indigo-900/80 dark:text-indigo-200 mt-0.5">
               Visible Beliefs
@@ -197,17 +198,17 @@ export function BeliefsPage({ rootId, nodes }: Props) {
 
           <div className="rounded-xl border border-emerald-100 dark:border-emerald-950/60 bg-emerald-50/50 dark:bg-emerald-950/30 p-3.5 text-center">
             <div className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-300">
-              {ownCount}
+              <span className="inline-flex items-center gap-2"><PenLine className="h-5 w-5 opacity-60" /><CountUp value={ownCount} /></span>
             </div>
             <div className="text-xs font-semibold text-emerald-900/80 dark:text-emerald-200 mt-0.5">
               Own
             </div>
-            <div className="text-[10px] text-emerald-500 font-medium">(Wrote by this branch)</div>
+            <div className="text-[10px] text-emerald-500 font-medium">(Written by this branch)</div>
           </div>
 
           <div className="rounded-xl border border-amber-100 dark:border-amber-950/60 bg-amber-50/50 dark:bg-amber-950/30 p-3.5 text-center">
             <div className="text-2xl font-extrabold text-amber-700 dark:text-amber-300">
-              {tombstonedCount}
+              <span className="inline-flex items-center gap-2"><Eraser className="h-5 w-5 opacity-60" /><CountUp value={tombstonedCount} /></span>
             </div>
             <div className="text-xs font-semibold text-amber-900/80 dark:text-amber-200 mt-0.5">
               Tombstoned
@@ -217,7 +218,7 @@ export function BeliefsPage({ rootId, nodes }: Props) {
 
           <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-3.5 text-center">
             <div className="text-2xl font-extrabold text-slate-800 dark:text-slate-200 font-mono">
-              {queryTime}
+              <span className="inline-flex items-center gap-2"><Timer className="h-5 w-5 opacity-60" />{queryTime}</span>
             </div>
             <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-0.5">
               Query Time

@@ -3,7 +3,7 @@ import type { Section } from "../components/layout/AppShell";
 
 const SECTIONS: Section[] = [
   "overview", "decisions", "branches", "memory", "deployments",
-  "observability", "aws", "proofs", "reports", "audit", "judge",
+  "observability", "aws", "outputs", "proofs", "reports", "audit", "judge",
 ];
 
 export interface Route {

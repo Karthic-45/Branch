@@ -437,7 +437,6 @@ function BuildRow({ build }: { build: AwsBuild }) {
   const total = build.phases.reduce((n, p) => n + (p.seconds ?? 0), 0);
   const isSucceeded = build.status === "SUCCEEDED";
   const isInProgress = build.status === "IN_PROGRESS";
-  const isFailed = build.status === "FAILED";
 
   const statusBadge = isSucceeded ? (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] uppercase tracking-wider border border-emerald-200 dark:border-emerald-800/60 shadow-2xs">

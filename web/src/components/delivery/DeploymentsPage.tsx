@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Rocket, GitMerge, ShieldCheck, Upload, ClipboardList, Plus, X, Loader2, AlertTriangle,
 } from "lucide-react";
-import type { DecisionNode, ProjectDeployment } from "../../lib/types";
-import { createDeployment, rollbackDeployment } from "../../lib/api";
-import { PageSkeleton } from "../common/Loading";
+import type { DecisionNode, ProductionEvidence, ProjectDeployment } from "../../lib/types";
+import { createDeployment, fetchCounterfactual, fetchDeploymentEvidence, rollbackDeployment } from "../../lib/api";
+import { Ring } from "../common/Motion";
+import { PageSkeleton, Shimmer } from "../common/Loading";
 
 /* What this page is for
    ---------------------
@@ -283,11 +284,84 @@ export function DeploymentsPage({
                     {active.deployment.detail}
                   </p>
                 )}
+                <DeploymentEvidence key={active.deployment.id} deploymentId={active.deployment.id} mergeId={active.deployment.merge_id} />
               </div>
             )}
           </>
         )}
       </section>
+    </div>
+  );
+}
+
+/** Test results of the deployed decision, and before/after measurements
+ *  recorded around this deployment. Both read from the backend; neither is
+ *  shown if it was never recorded. */
+function DeploymentEvidence({ deploymentId, mergeId }: { deploymentId: string; mergeId: string }) {
+  const [tests, setTests] = useState<{ passed: number; total: number } | null | undefined>(undefined);
+  const [evidence, setEvidence] = useState<ProductionEvidence | null | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    fetchCounterfactual(mergeId)
+      .then((c) => { if (!cancelled) setTests(c.winner?.total ? { passed: c.winner.passed ?? 0, total: c.winner.total } : null); })
+      .catch(() => { if (!cancelled) setTests(null); });
+    fetchDeploymentEvidence(deploymentId)
+      .then((e) => { if (!cancelled) setEvidence(e); })
+      .catch(() => { if (!cancelled) setEvidence(null); });
+    return () => { cancelled = true; };
+  }, [deploymentId, mergeId]);
+
+  const comps = evidence?.comparisons ?? [];
+  return (
+    <div className="grid grid-cols-1 gap-4 border-t border-slate-200/80 pt-4 md:grid-cols-[240px_1fr] dark:border-slate-800">
+      <div>
+        <h4 className="mb-3 text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Test results</h4>
+        {tests === undefined ? (
+          <Shimmer w={110} h={110} round={55} />
+        ) : tests === null ? (
+          <p className="text-xs text-slate-400">No test result recorded for this decision.</p>
+        ) : (
+          <div className="flex items-center gap-4">
+            <Ring pct={tests.passed / tests.total} size={104} stroke={10} color={tests.passed === tests.total ? "#10b981" : "#f59e0b"}>
+              <span className="text-lg font-extrabold text-slate-900 dark:text-white">{((tests.passed / tests.total) * 100).toFixed(1)}%</span>
+              <span className="text-[9px] font-semibold uppercase text-slate-400">passed</span>
+            </Ring>
+            <div className="space-y-1 text-[12px] text-slate-600 dark:text-slate-300">
+              <div className="flex justify-between gap-4"><span>Passed</span><b className="font-mono">{tests.passed}</b></div>
+              <div className="flex justify-between gap-4"><span>Failed</span><b className="font-mono">{tests.total - tests.passed}</b></div>
+              <div className="flex justify-between gap-4 border-t border-slate-200 pt-1 dark:border-slate-700"><span>Total</span><b className="font-mono">{tests.total}</b></div>
+            </div>
+          </div>
+        )}
+      </div>
+      <div>
+        <h4 className="mb-3 text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Performance metrics (before → after)</h4>
+        {evidence === undefined ? (
+          <div className="grid grid-cols-3 gap-3">{[0, 1, 2].map((i) => <Shimmer key={i} h={58} round={10} />)}</div>
+        ) : comps.length === 0 ? (
+          <p className="text-xs text-slate-400">
+            No measurements recorded around this deployment. Record before/after values (from CloudWatch or manually)
+            via the observations API to compare them here.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+            {comps.map((c) => {
+              const pc = c.percent_change;
+              return (
+                <div key={c.metric} className="rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+                  <div className="truncate text-[10.5px] font-semibold text-slate-500" title={c.metric}>{c.metric}</div>
+                  <div className={`font-mono text-lg font-extrabold ${pc === null ? "text-slate-700 dark:text-slate-200" : pc < 0 ? "text-emerald-600" : "text-amber-600"}`}>
+                    {pc === null ? "—" : `${pc > 0 ? "+" : ""}${pc.toFixed(1)}%`}
+                  </div>
+                  <div className="font-mono text-[10px] text-slate-400">
+                    {c.before ?? "—"} → {c.after ?? "—"}{c.unit ? ` ${c.unit}` : ""} · {c.sources.join(", ")}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

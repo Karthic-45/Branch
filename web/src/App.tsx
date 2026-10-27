@@ -1,4 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { AppShell, type Section } from "./components/layout/AppShell";
 import { CommandPalette } from "./components/layout/CommandPalette";
 import { OverviewPage } from "./components/overview/OverviewPage";
@@ -26,6 +27,8 @@ const AuditPage = lazy(() =>
   import("./components/audit/AuditPage").then((m) => ({ default: m.AuditPage })));
 const AwsStoragePage = lazy(() =>
   import("./components/aws/AwsStoragePage").then((m) => ({ default: m.AwsStoragePage })));
+const AwsOutputsPage = lazy(() =>
+  import("./components/aws/AwsOutputsPage").then((m) => ({ default: m.AwsOutputsPage })));
 const BranchesPage = lazy(() =>
   import("./components/branches/BranchesPage").then((m) => ({ default: m.BranchesPage })));
 import { NewFromRepoForm } from "./components/NewFromRepoForm";
@@ -154,6 +157,14 @@ export default function App() {
         loading={dataLoading}
       >
         <Suspense fallback={<ViewLoader />}>
+        {/* Keyed on the section: each page fades and rises in as it opens. */}
+        <motion.div
+          key={section}
+          className="bm-page"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        >
         {section === "overview" && (
           <OverviewPage
             rootId={connectedRoot}
@@ -220,6 +231,7 @@ export default function App() {
           />
         )}
         {section === "aws" && <AwsStoragePage rootId={connectedRoot} />}
+        {section === "outputs" && <AwsOutputsPage rootId={connectedRoot} />}
         {section === "proofs" && <ProofsLab onToast={toast} />}
         {section === "reports" && <ReportsPage rootId={connectedRoot} onToast={toast} />}
         {section === "audit" && (
@@ -233,6 +245,7 @@ export default function App() {
         )}
 
         {section === "judge" && <div className="p-5 sm:p-6 lg:p-7 w-full"><JudgeMode onNavigate={(s) => setSection(s as Section)} /></div>}
+        </motion.div>
         </Suspense>
       </AppShell>
 

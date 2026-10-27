@@ -6,6 +6,7 @@ import type {
 import type { Theme } from "../hooks/useTheme";
 import { fetchAwsBuilds, fetchAwsStorage, fetchClusterStats, fetchCostReport } from "../lib/api";
 import { LoadingCaption, Shimmer } from "./common/Loading";
+import { motion } from "framer-motion";
 
 /* Every value here is fetched from the backend -- cluster introspection,
    the measured cost report, live S3/CodeBuild listings and the readiness
@@ -156,6 +157,11 @@ export function SystemSection({ rootId, readiness }: Props) {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <BuildTimeChart builds={builds} loading={loading} />
+        <ProbeLatencyChart readiness={readiness ?? null} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#11141c] p-5 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">CodeBuild evaluations</h2>
@@ -297,6 +303,104 @@ function Node({ name, sub, check, status }: { name: string; sub?: string; check?
       <div className="truncate text-[9.5px] opacity-80">
         {s.replace(/_/g, " ")}{check?.latency_ms != null ? ` · ${Math.round(check.latency_ms)} ms` : ""}
       </div>
+    </div>
+  );
+}
+
+
+/* ── Charts (real data only) ─────────────────────────────────────────────── */
+
+const CHART_CARD = "rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#11141c] p-5 shadow-xs";
+
+/** Duration of every CodeBuild evaluation for this project, oldest first. */
+function BuildTimeChart({ builds, loading }: { builds: AwsBuilds | null; loading: boolean }) {
+  const rows = (builds?.builds ?? [])
+    .filter((b) => b.start_time && b.end_time)
+    .map((b) => ({
+      id: b.id,
+      label: `#${b.build_number ?? "?"}`,
+      name: b.strategy ?? "",
+      secs: (Date.parse(b.end_time!) - Date.parse(b.start_time!)) / 1000,
+      ok: b.status === "SUCCEEDED",
+      start: Date.parse(b.start_time!),
+    }))
+    .sort((a, b) => a.start - b.start);
+  const max = Math.max(1, ...rows.map((r) => r.secs));
+  const avg = rows.length ? rows.reduce((n, r) => n + r.secs, 0) / rows.length : null;
+  const fmt = (s: number) => `${Math.floor(s / 60)}m ${String(Math.round(s % 60)).padStart(2, "0")}s`;
+  return (
+    <div className={CHART_CARD}>
+      <div className="mb-4 flex items-baseline justify-between">
+        <div>
+          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">CodeBuild build time</h2>
+          <p className="text-[11px] text-slate-400">One bar per evaluation build, from CodeBuild's own start and end times.</p>
+        </div>
+        <span className="font-mono text-[11px] text-slate-500">{avg !== null ? `avg ${fmt(avg)}` : ""}</span>
+      </div>
+      {loading && !builds ? (
+        <div className="flex h-40 items-end gap-3">{[60, 85, 70, 95, 50].map((h, i) => <Shimmer key={i} w="100%" h={h * 1.4} round={6} />)}</div>
+      ) : rows.length === 0 ? (
+        <div className="flex h-40 items-center justify-center rounded-xl border border-dashed border-slate-200 text-xs text-slate-400 dark:border-slate-800">
+          No completed CodeBuild evaluations for this project yet.
+        </div>
+      ) : (
+        <div className="flex h-44 items-end gap-2 border-b border-slate-100 pb-0 dark:border-slate-800">
+          {rows.map((r, i) => (
+            <div key={r.id} className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end" title={`${r.label} ${r.name}: ${fmt(r.secs)}`}>
+              <span className="mb-1 font-mono text-[9.5px] text-slate-500 opacity-0 transition-opacity group-hover:opacity-100">{fmt(r.secs)}</span>
+              <motion.div
+                initial={{ height: 0 }}
+                animate={{ height: `${(r.secs / max) * 100}%` }}
+                transition={{ duration: 0.7, delay: 0.05 * i, ease: "easeOut" }}
+                className={`w-full max-w-10 rounded-t-md ${r.ok ? "bg-gradient-to-t from-indigo-500 to-blue-400" : "bg-gradient-to-t from-rose-500 to-rose-400"}`}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+      {rows.length > 0 && (
+        <div className="mt-1.5 flex gap-2">
+          {rows.map((r) => (
+            <span key={r.id} className="min-w-0 flex-1 truncate text-center font-mono text-[9.5px] text-slate-400">{r.label}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** How long each dependency took to answer its latest readiness probe. */
+function ProbeLatencyChart({ readiness }: { readiness: ReadinessReport | null }) {
+  const rows = (readiness?.checks ?? []).filter((c) => c.latency_ms != null);
+  const max = Math.max(1, ...rows.map((c) => c.latency_ms ?? 0));
+  return (
+    <div className={CHART_CARD}>
+      <div className="mb-4">
+        <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">Dependency response time</h2>
+        <p className="text-[11px] text-slate-400">Latency of each component's latest readiness probe (real calls, not pings).</p>
+      </div>
+      {!readiness ? (
+        <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Shimmer key={i} h={14} />)}</div>
+      ) : rows.length === 0 ? (
+        <div className="flex h-40 items-center justify-center text-xs text-slate-400">No probe timings reported.</div>
+      ) : (
+        <div className="space-y-2.5">
+          {rows.map((c, i) => (
+            <div key={c.name} className="grid grid-cols-[150px_1fr_64px] items-center gap-3 text-[11.5px]">
+              <span className="truncate font-medium text-slate-600 dark:text-slate-300" title={c.detail}>{c.name}</span>
+              <div className="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${((c.latency_ms ?? 0) / max) * 100}%` }}
+                  transition={{ duration: 0.7, delay: 0.06 * i, ease: "easeOut" }}
+                  className={`h-full rounded-full ${c.status === "ready" ? "bg-emerald-500" : c.status === "not_ready" ? "bg-rose-500" : "bg-amber-500"}`}
+                />
+              </div>
+              <span className="text-right font-mono text-slate-500">{Math.round(c.latency_ms ?? 0).toLocaleString()} ms</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
