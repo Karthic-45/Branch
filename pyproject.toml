@@ -7,7 +7,7 @@ license = { text = "MIT" }
 requires-python = ">=3.12"
 dependencies = [
     "psycopg[binary,pool]>=3.2",
-    "anthropic[bedrock]>=0.70",
+    "anthropic[bedrock]>=0.70,<2.0.0",
     "boto3>=1.35",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
